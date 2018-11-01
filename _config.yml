@@ -1,1 +1,3 @@
 theme: jekyll-theme-minimal
+title: Predicting protein tertiary structure using Recurrent Neural Networks
+description: The project aims to partially reproduce the AlQuraishi's results from the paper 'End-to-end differentiable learning of protein structure'
