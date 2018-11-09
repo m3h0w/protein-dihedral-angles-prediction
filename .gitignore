@@ -3,3 +3,5 @@
 ./.ipynb_checkpoints/
 casp*/
 logs/
+*.joblib
+*.txt
