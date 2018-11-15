@@ -3,6 +3,8 @@ from sklearn.externals import joblib
 import numpy as np
 
 DATA_ORDER = ["[ID]", "[PRIMARY]", "[EVOLUTIONARY]", "[TERTIARY]", "[MASK]"]
+from tqdm import tqdm
+from sklearn.externals import joblib
 
 def count_protein(raw_txt_data):
     data = filter_line_end(raw_txt_data)
@@ -14,6 +16,23 @@ def count_protein(raw_txt_data):
 
 def filter_line_end(data):
     return [str_.replace('\n', '') for str_ in data]
+
+def get_mask_from_all_data(data, lim):
+    result = []
+    protein_count = 0
+    flag = False
+    for line in data:
+        if line == DATA_ORDER[0]: #id
+            flag = False
+        if flag:
+            result.append(line)
+        if line == DATA_ORDER[4]: #mask
+            flag = True
+        if line == DATA_ORDER[0]: #id
+            protein_count += 1
+        if lim and protein_count > lim:
+            return result
+    return result
 
 def get_primary_from_all_data(data, lim):
     result = []
@@ -103,21 +122,27 @@ def parse_primary_from_file(path, data_lim=None):
     print("Loaded data and filtered line endings")
     primary = get_primary_from_all_data(data_, data_lim)
     print("Extracted primary data")
-
-    try:
-        le = load_file('le.joblib')
-    except Exception as e:
-        print(e, "You need to have the Label Encoder 'le.joblib' in the same folder as your scripts")
-
-    try:
-        ohe = load_file('ohe.joblib')
-    except Exception as e:
-        print(e, "You need to have the One Hot Encoder 'ohe.joblib' in the same folder as your scripts")
-
+    le = load_file('le.joblib')
+    ohe = load_file('ohe.joblib')
     primary_in_floats = [le.transform([_ for _ in c]) for c in primary]
     primary_encoded = [ohe.transform(a.reshape(-1,1)).toarray() for a in primary_in_floats]
     print("Encoded primary sequences")
     return primary_encoded
+
+def parse_mask_from_file(path, data_lim=None):
+    with open(path) as f:
+        data = f.readlines()
+
+    data_ = filter_line_end(data)
+    print("Loaded data and filtered line endings")
+    only_mask = get_mask_from_all_data(data_, data_lim)
+    only_mask = [mask for mask in only_mask if mask != '']
+    only_mask_ = []
+    for mask in only_mask:
+        only_mask_.append(np.array(list(mask)) == '+')
+
+    print("Extracted mask data")
+    return only_mask_
 
 def get_dih(protein_tertiary):
     p = protein_tertiary

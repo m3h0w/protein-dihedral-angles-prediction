@@ -5,11 +5,18 @@ def fix_nans(a):
     a[where_are_NaNs] = 0
     return a
 
-def pad_array(array, max_len):
-    return np.asarray([np.pad(a, [(max_len - len(a), 0), (0,0)], mode='constant') for a in array], dtype=np.float32)
+def pad_array(array, max_len, value=0., dtype=np.float32):
+    print("padded")
+    if(len(array[0].shape) < 2):
+        array = np.array([a.reshape(-1,1) for a in array])
+    print(array.shape, array[0].shape)
+    return np.asarray([np.pad(a, [(max_len - len(a), 0), (0,0)], mode='constant', constant_values=value) for a in array], dtype=dtype)
 
-def limit_length_and_pad(prim, evo, dih, max_length):
-    mask = np.array([len(el) for el in prim]) <= max_length
-    prim_lim, evo_lim, dih_lim = np.array(prim)[mask], np.array(evo)[mask], np.array(dih)[mask]
-    prim_pad, evo_pad, dih_pad = pad_array(prim_lim, max_length), pad_array(evo_lim, max_length), pad_array(dih_lim, max_length)
-    return fix_nans(prim_pad), fix_nans(evo_pad), fix_nans(dih_pad)
+def limit_length_and_pad(prim, evo, dih, mask, max_length):
+    len_mask = np.array([len(el) for el in prim]) <= max_length
+    prim_lim, evo_lim, dih_lim, mask_lim = (np.array(prim)[len_mask], np.array(evo)[len_mask], 
+                                            np.array(dih)[len_mask], np.array(mask)[len_mask])
+    prim_pad, evo_pad, dih_pad, mask_pad = (pad_array(prim_lim, max_length), pad_array(evo_lim, max_length), 
+                                            pad_array(dih_lim, max_length), pad_array(mask_lim, max_length, value=False, dtype=np.bool))
+    mask_pad = mask_pad.reshape(mask_pad.shape[0], -1) # this is necessary because numpy expects this shape to use mask as an index
+    return fix_nans(prim_pad), fix_nans(evo_pad), fix_nans(dih_pad), fix_nans(mask_pad)
