@@ -5,3 +5,4 @@ casp*/
 logs/
 *.joblib
 *.txt
+__pycache__/
