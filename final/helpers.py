@@ -1,6 +1,7 @@
 import numpy as np
 import scipy
 import tensorflow as tf
+from sklearn.utils import shuffle
 
 class Helpers:
     @staticmethod
@@ -41,12 +42,6 @@ class Helpers:
         return clusters_tf
 
     @staticmethod
-    def conv_layer(in_, neurons, filter_size):
-        if type(in_) == list:
-            in_ = tf.concat(in_, axis=2)
-        return tf.layers.conv1d(in_, neurons, filter_size, activation=tf.nn.relu, padding='same')
-
-    @staticmethod
     def mask_all(tensors_list, mask, axis=None):
         res = []
         for tensor in tensors_list:
@@ -71,18 +66,29 @@ class Helpers:
                 raise KeyError(mode, 'is an invalid angularization mode')
 
     @staticmethod
+    def ang_to_vec_tf(angles):  
+        angles = tf.stack([angles] * angles.get_shape()[-1], axis=-1)
+        angles_cos = tf.cos(angles[:,:,:,0])
+        angles_sin = tf.sin(angles[:,:,:,1])
+        angles_stacked = tf.squeeze(tf.stack([angles_cos, angles_sin],  axis=-1))
+        return angles_stacked
+
+
+    @staticmethod
     def vec_to_angle(input_tensor):
         return tf.math.atan2(input_tensor[:,:,1], input_tensor[:,:,0])
     
     @staticmethod
     def mae(y_true, y_pred):
-        if tf.shape(y_true).get_shape()[0] == 2:
-            axis = 0
-        elif tf.shape(y_true).get_shape()[0] == 3:
-            axis = [0,1]
-        else:
-            raise ValueError("y_true is neither 2- nor 3-dimensional")
-        return tf.reduce_mean(tf.abs(tf.subtract(y_true[:,:], y_pred[:,:])), axis=axis)
+        # print(tf.shape(y_true).get_shape()[0])
+        axis=None
+        # if tf.shape(y_true).get_shape()[0] == 2:
+        #     axis = 0
+        # elif tf.shape(y_true).get_shape()[0] == 3:
+        #     axis = [0,1]
+        # else:
+        #     raise ValueError("y_true is neither 2- nor 3-dimensional")
+        return tf.reduce_mean(tf.abs(tf.subtract(y_true, y_pred)), axis=axis)
     
     @staticmethod
     def loss360(y_true, y_pred):
@@ -102,3 +108,14 @@ class Helpers:
         b_angles = np.split(np.cos(y_pred.reshape(-1,)).reshape(-1,n_angles),
                                         indices_or_sections=n_angles, axis=-1)
         return [scipy.stats.pearsonr(a.reshape(-1,), b.reshape(-1,))[0] for a,b in zip(a_angles, b_angles)]
+
+    @staticmethod
+    def unison_shuffled_copies_sklearn(the_list):
+        return shuffle(*the_list) 
+
+    @staticmethod
+    def pearson_tf(t, p):
+        vt = t - tf.reduce_mean(t, axis=0)
+        vp = p - tf.reduce_mean(p, axis=0)
+
+        return tf.reduce_sum(vt * vp, 0) / (tf.sqrt(tf.reduce_sum(vt ** 2, 0)) * tf.sqrt(tf.reduce_sum(vp ** 2, 0)))
