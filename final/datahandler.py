@@ -3,14 +3,20 @@ import tensorflow as tf
 import numpy as np
 
 class DataHandler:
-    def __init__(self, data_path, casps, percentages, num_epochs, mode='training'):
+    def __init__(self, data_path, casps, num_epochs, mode='training', percentages=None):
+        if mode == 'training':
+            assert percentages
+
         self.NUM_AAS = 20
         self.NUM_DIMENSIONS = 3
         
         # choose paths from which to get training data
         self.paths = []
         for casp in casps:
-            self.paths += [data_path + casp + '/'+mode+'/' + str(perc) + '/*' for perc in percentages]
+            if mode == 'training':
+                self.paths += [data_path + casp + '/'+mode+'/' + str(perc) + '/*' for perc in percentages]
+            else:
+                self.paths += [data_path + casp + '/'+mode+'/*']
         print(self.paths)
         
         # load all the file names from these paths

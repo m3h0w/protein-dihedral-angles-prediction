@@ -6,10 +6,8 @@ def fix_nans(a):
     return a
 
 def pad_array(array, max_len=None, value=0., dtype=np.float32):
-    print("padded")
     if(len(array[0].shape) < 2):
         array = np.array([a.reshape(-1,1) for a in array])
-    print(array.shape, array[0].shape)
     if max_len == None:
         max_len = np.max([len(a) for a in array])
     return np.asarray([np.pad(a, [(max_len - len(a), 0), (0,0)], mode='constant', constant_values=value) for a in array], dtype=dtype)
@@ -25,4 +23,5 @@ def limit_length_and_pad(prim, evo, dih, mask, max_length=None):
     prim_pad, evo_pad, dih_pad, mask_pad = (pad_array(prim_lim, max_length), pad_array(evo_lim, max_length), 
                                             pad_array(dih_lim, max_length), pad_array(mask_lim, max_length, value=False, dtype=np.bool))
     mask_pad = mask_pad.reshape(mask_pad.shape[0], -1) # this is necessary because numpy expects this shape to use mask as an index
+    print("padded")
     return fix_nans(prim_pad), fix_nans(evo_pad), fix_nans(dih_pad), fix_nans(mask_pad)

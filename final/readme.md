@@ -23,12 +23,15 @@ Controlled fully by a boolean: include_evo, that controlls if evolutionary featu
 The model is controlled using the Model class defined in the model.py.
 
 Its behaviour is fully determined by
-a set of arguments passed to the contructors: <i>n_angles, model_type, prediction_mode, ang_mode.</i>
+a set of arguments passed to the contructors: <i>n_angles, model_type, prediction_mode, ang_mode, loss_mode,dropout_rate.</i>
 
 - n_angles: 2 if should predict only phi and psi and 3 if phi, psi, and omega
 - model_type: see <b>Core</b> (below)
 - prediction_mode: see <b>Prediction</b> (below)
-- ang_mode: see <b>Prediction -> Angularization</b>
+- ang_mode: see <b>Predictions and corresponding loss modes -> Angularization</b>
+- loss_mode: see <b>Predictions and corresponding loss modes</b>
+- dropout_rate: controlls the regularization applied to the core model
+- regularize_vectors: controlls if regularization loss should be applied to vectors to keep them on unit circle (only available in 'regression_vectors' mode)
 
 ### Core
 
@@ -42,18 +45,34 @@ Modes:
 - cnn_small: 6 layers
 - bilstm: bidirectional lstm. 1 layer, 128 neurons
 
-### Prediction
+### Predictions and corresponding loss modes
 
 Modes:
 - regression_angles
 
-<i>n_angles</i> values predicted in a dense layer, piped through tanh or cos and multiplied by pi to fit radian range
+    <i>n_angles</i> values predicted in a dense layer, piped through tanh or cos and multiplied by pi to fit radian range
 
-Angularization Modes: 'tanh' or 'cos'.
+    Available Angularization Modes: 'tanh' or 'cos'
+    
+    Available loss modes: 'angular_mae' or 'mae', both are applied to angles
+
 - regression_vectors
 
-<i>n_angles*2</i> values predicted in a dense layer, converted to angles by piping through cos(y) and sin(x) and atan2
-<br>
+    <i>n_angles*2</i> values predicted in a dense layer, converted to angles by passing through an atan2 function
+    
+    Available loss modes: 'angular_mae' or 'mae'. Angular mae is applied to angles, mae is applied to vectors.
+
+- alphabet_angles
+
+    n_angles values predicted by calculating a weighted average of an alpahabet of n_clusters size and a probability disttribution over that alphabet
+
+    Available loss modes: 'angular_mae' or 'mae', both are applied to angles
+
+- alphabet_vectors
+
+    As in alphabet_angles but first the network predicts 2 values per angle and then atan2 is applied as in regression vectors.
+
+    Available loss modes: 'angular_mae' or 'mae'. Angular mae is applied to angles, mae is applied to vectors.
 
 #### Angularization
 

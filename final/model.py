@@ -44,9 +44,17 @@ class Model:
             'bilstm': lambda input_: self.CoreModels.bidirectional_lstm(input_, num_layers=2, 
                 rnn_size=300, dropout=dropout_rate, lengths=None)
         }[model_type]
+        
+        if self.prediction_mode == 'regression_angles':
+            self.angularize = {
+                'tanh': lambda input_: Helpers.angularize(input_, mode='tanh'),
+                'cos': lambda input_: Helpers.angularize(input_, mode='cos'),
+                'undefined': lambda: self.raise_wrong_model_configuration('ang_mode has to be defined for regression_angles prediction mode')
+            }[ang_mode]
 
         self.rad_pred_model = {
-            'regression_angles': lambda input_: self.PredictionModels.regression_angles(input_, self.n_angles, self.output_mask),
+            'regression_angles': lambda input_: self.PredictionModels.regression_angles(input_, self.n_angles, self.output_mask,
+                                                                                        angularize=self.angularize),
             'regression_vectors': lambda input_: self.PredictionModels.regression_vectors(input_, self.n_angles, 
                                                                                           self.output_mask, 
                                                                                           regularize_vectors=regularize_vectors),
@@ -57,13 +65,6 @@ class Model:
                                                                               self.output_mask, regularize_vectors=regularize_vectors,
                                                                               ),  
         }[self.prediction_mode]
-        
-        if self.prediction_mode == 'regression_angles':
-            self.angularize = {
-                'tanh': lambda input_: Helpers.angularize(input_, mode='tanh'),
-                'cos': lambda input_: Helpers.angularize(input_, mode='cos'),
-                'undefined': lambda: self.raise_wrong_model_configuration('ang_mode has to be defined for regression_angles prediction mode')
-            }[ang_mode]
 
         self.regularization_losses = []
     
@@ -113,10 +114,10 @@ class Model:
         """ Definitions of how LSTM or CNN output is converted into angles
         using a fully connected layer """
         @staticmethod
-        def regression_angles(core_out, n_angles, output_mask):
+        def regression_angles(core_out, n_angles, output_mask, angularize):
             rad_pred_cont = tf.layers.dense(core_out, n_angles) # continuous value before angualrization
-            rad_pred = self.angularize(rad_pred_cont) # chosen in Model constructor with ang_mode parameter
-            rad_pred_masked = tf.boolean_mask(vec_pred, output_mask)
+            rad_pred = angularize(rad_pred_cont) # chosen in Model constructor with ang_mode parameter
+            rad_pred_masked = tf.boolean_mask(rad_pred, output_mask)
             return (rad_pred_masked, None), []
         
         @staticmethod

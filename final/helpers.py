@@ -1,5 +1,5 @@
 import numpy as np
-import scipy
+from scipy.stats import pearsonr
 import tensorflow as tf
 from sklearn.utils import shuffle
 
@@ -90,14 +90,12 @@ class Helpers:
     
     @staticmethod
     def mae(y_true, y_pred):
-        # print(tf.shape(y_true).get_shape()[0])
-        axis=None
-        # if tf.shape(y_true).get_shape()[0] == 2:
-        #     axis = 0
-        # elif tf.shape(y_true).get_shape()[0] == 3:
-        #     axis = [0,1]
-        # else:
-        #     raise ValueError("y_true is neither 2- nor 3-dimensional")
+        if tf.shape(y_true).get_shape()[0] == 2:
+            axis = 0
+        elif tf.shape(y_true).get_shape()[0] == 3:
+            axis = [0,1]
+        else:
+            axis = 0
         return tf.reduce_mean(tf.abs(tf.subtract(y_true, y_pred)), axis=axis)
     
     @staticmethod
@@ -117,7 +115,7 @@ class Helpers:
                                         indices_or_sections=n_angles, axis=-1)
         b_angles = np.split(np.cos(y_pred.reshape(-1,)).reshape(-1,n_angles),
                                         indices_or_sections=n_angles, axis=-1)
-        return [scipy.stats.pearsonr(a.reshape(-1,), b.reshape(-1,))[0] for a,b in zip(a_angles, b_angles)]
+        return [pearsonr(a.reshape(-1,), b.reshape(-1,))[0] for a,b in zip(a_angles, b_angles)]
 
     @staticmethod
     def unison_shuffled_copies_sklearn(the_list):
