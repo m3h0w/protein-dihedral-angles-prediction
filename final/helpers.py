@@ -73,6 +73,16 @@ class Helpers:
         angles_stacked = tf.squeeze(tf.stack([angles_cos, angles_sin],  axis=-1))
         return angles_stacked
 
+    @staticmethod
+    def ang_to_vec(angles):
+        res = []
+        for i in range(angles.shape[-1]):
+            angles_cos = np.cos(np.rollaxis(angles, -1, 0)[i])
+            angles_sin = np.sin(np.rollaxis(angles, -1, 0)[i])
+            angles_stacked = np.stack([angles_cos, angles_sin], axis=-1)
+            res.append(angles_stacked)
+        return np.concatenate(res, axis=-1)
+
 
     @staticmethod
     def vec_to_angle(input_tensor):

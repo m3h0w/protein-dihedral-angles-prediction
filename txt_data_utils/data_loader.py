@@ -122,8 +122,8 @@ def parse_primary_from_file(path, data_lim=None):
     print("Loaded data and filtered line endings")
     primary = get_primary_from_all_data(data_, data_lim)
     print("Extracted primary data")
-    le = load_file('le.joblib')
-    ohe = load_file('ohe.joblib')
+    le = load_file('txt_data_utils/le.joblib')
+    ohe = load_file('txt_data_utils/ohe.joblib')
     primary_in_floats = [le.transform([_ for _ in c]) for c in primary]
     primary_encoded = [ohe.transform(a.reshape(-1,1)).toarray() for a in primary_in_floats]
     print("Encoded primary sequences")
