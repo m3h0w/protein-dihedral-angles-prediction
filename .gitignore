@@ -6,3 +6,4 @@ logs/
 *.joblib
 *.txt
 __pycache__/
+checkpoints/
