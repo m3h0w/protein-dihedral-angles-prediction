@@ -16,8 +16,9 @@ class Helpers:
 
     @staticmethod
     @tf.custom_gradient
-    def clip_grad_layer(x, eps=1e-10):
+    def clip_grad_layer(x):
         def grad(dy):
+            eps=1e-5 # set statically here because tf doesn't accept arguments here in a non-eager execution mode
             return tf.clip_by_value(dy, eps, eps)
         return tf.identity(x), grad
     

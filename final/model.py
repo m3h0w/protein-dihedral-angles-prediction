@@ -46,7 +46,7 @@ class Model:
         }[model_type]
         
         if self.prediction_mode == 'regression_angles':
-            self.angularize = {
+            self.angularize_func = {
                 'tanh': lambda input_: Helpers.angularize(input_, mode='tanh'),
                 'cos': lambda input_: Helpers.angularize(input_, mode='cos'),
                 'undefined': lambda: self.raise_wrong_model_configuration('ang_mode has to be defined for regression_angles prediction mode')
@@ -54,16 +54,16 @@ class Model:
 
         self.rad_pred_model = {
             'regression_angles': lambda input_: self.PredictionModels.regression_angles(input_, self.n_angles, self.output_mask,
-                                                                                        angularize=self.angularize),
+                                                                                        angularize_func=self.angularize_func),
             'regression_vectors': lambda input_: self.PredictionModels.regression_vectors(input_, self.n_angles, 
                                                                                           self.output_mask, 
                                                                                           regularize_vectors=regularize_vectors),
             'alphabet_vectors': lambda input_: self.PredictionModels.alphabet_vectors(input_, self.n_angles, self.n_clusters,
-                                                                              self.output_mask
-                                                                              ),
+                                                                              self.output_mask, 
+                                                                              init_clusters_func = self._init_clusters),
             'alphabet_angles': lambda input_: self.PredictionModels.alphabet_angles(input_, self.n_angles, self.n_clusters,
                                                                               self.output_mask, regularize_vectors=regularize_vectors,
-                                                                              ),  
+                                                                              init_clusters_func = self._init_clusters)  
         }[self.prediction_mode]
 
         self.regularization_losses = []
@@ -107,6 +107,17 @@ class Model:
 
         return loss, loss_vec
 
+    def _init_clusters(self, should_angularize, init_mode='gaussian'):
+        if init_mode == 'uniform':
+            clusters = np.asarray(np.random.uniform(low=-np.pi, high=np.pi, size=(self.n_clusters, self.n_angles)), dtype=np.float32)
+        elif init_mode == 'gaussian':
+            clusters = np.asarray(np.pi * np.random.normal(0., 0.5, size=(self.n_clusters, self.n_angles)), dtype=np.float32)
+        
+        if should_angularize:
+            clusters = Helpers.ang_to_vec(clusters)
+
+        return clusters
+
     def mask_other(self, inputs):
         return Helpers.mask_all(inputs, self.output_mask)
 
@@ -114,9 +125,9 @@ class Model:
         """ Definitions of how LSTM or CNN output is converted into angles
         using a fully connected layer """
         @staticmethod
-        def regression_angles(core_out, n_angles, output_mask, angularize):
+        def regression_angles(core_out, n_angles, output_mask, angularize_func):
             rad_pred_cont = tf.layers.dense(core_out, n_angles) # continuous value before angualrization
-            rad_pred = angularize(rad_pred_cont) # chosen in Model constructor with ang_mode parameter
+            rad_pred = angularize_func(rad_pred_cont) # chosen in Model constructor with ang_mode parameter
             rad_pred_masked = tf.boolean_mask(rad_pred, output_mask)
             return (rad_pred_masked, None), []
         
@@ -141,11 +152,12 @@ class Model:
             return (rad_pred_masked, vec_pred_masked_r), losses_to_return
 
         @staticmethod
-        def alphabet_vectors(core_out, n_angles, n_clusters, output_mask):
-
-            clusters = Helpers.ang_to_vec(np.asarray(np.random.uniform(low=-np.pi, high=np.pi, size=(n_clusters, n_angles)), dtype=np.float32))
+        def alphabet_vectors(core_out, n_angles, n_clusters, output_mask, init_clusters_func):
+            
+            clusters = init_clusters_func(should_angularize=True, init_mode='gaussian')
             clusters_tf = tf.Variable(initial_value=clusters, dtype=np.float32, trainable=True)
             clusters_tf = tf.clip_by_value(clusters_tf, -1, 1)
+            # clusters_tf = Helpers.clip_grad_layer(clusters_tf)
 
             logits = tf.layers.dense(core_out, n_clusters) # cluster logits
             logits = tf.layers.dropout(logits, rate=0.05)
@@ -159,11 +171,12 @@ class Model:
             return (rad_pred_masked, vec_pred_masked_r), []
 
         @staticmethod
-        def alphabet_angles(core_out, n_angles, n_clusters, output_mask, regularize_vectors):
+        def alphabet_angles(core_out, n_angles, n_clusters, output_mask, regularize_vectors, init_clusters_func):
 
-            clusters = np.asarray(np.random.uniform(low=-np.pi, high=np.pi, size=(n_clusters, n_angles)), dtype=np.float32)
+            clusters = init_clusters_func(should_angularize=False, init_mode='gaussian')
             clusters_tf = tf.Variable(initial_value=clusters, dtype=np.float32, trainable=True)
             clusters_tf = tf.clip_by_value(clusters_tf, -np.pi, np.pi)
+            # clusters_tf = Helpers.clip_grad_layer(clusters_tf)
 
             logits = tf.layers.dense(core_out, n_clusters) # cluster logits
             logits = tf.layers.dropout(logits, rate=0.05)
@@ -171,7 +184,7 @@ class Model:
             y_pred_masked = tf.boolean_mask(y_pred, output_mask)
 
             rad_pred_masked = tf.einsum('ij,bi->bj', clusters_tf, y_pred_masked)
-            return (rad_pred_masked, None), []
+            return (rad_pred_masked, None), []        
 
     class CoreModels:
         """ Definitions of the core model. I.e.: how protein sequence and evolutionary profile are
