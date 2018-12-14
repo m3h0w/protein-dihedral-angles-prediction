@@ -1,5 +1,5 @@
 import tensorflow as tf
-from final.helpers import Helpers
+from model.helpers import Helpers
 import numpy as np
 
 class Model:
