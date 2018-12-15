@@ -1,6 +1,6 @@
-# lstm-for-protein-tertiary-structure-prediction
-This project aims at reproducing selected part of the work on END-TO-END DIFFERENTIABLE LEARNING OF PROTEIN STRUCTURE.
+# Protein Tertiary Structure Prediction
+This project aims at reproducing selected part of Mohammed AlQuraishi's work on END-TO-END DIFFERENTIABLE LEARNING OF PROTEIN STRUCTURE (https://www.biorxiv.org/content/early/2018/08/29/265231), and Gao et al. on RaptorX (https://bmcbioinformatics.biomedcentral.com/articles/10.1186/s12859-018-2065-x).
 
 In the main folder you'll find notebooks that show examples of how to use the model.
 
-Model details and configuration can be found in the "final" folder.
+Model details and configuration can be found in the "model" folder.
