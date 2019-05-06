@@ -5,8 +5,6 @@ Report with the results: https://drive.google.com/file/d/1-SFavU5i6XlHK2sswy60k5
 
 In the main folder you'll find notebooks that show examples of how to use the model.
 
-Model details and configuration can be found in the "model" folder.
-
 # Model configuration details
 
 This tesnorflow model uses ProteinNet dataset (in the tensor version) as available in the preliminary release here: https://github.com/aqlaboratory/proteinnet
