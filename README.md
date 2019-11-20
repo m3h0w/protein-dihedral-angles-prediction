@@ -6,7 +6,7 @@ Report with the results: https://drive.google.com/file/d/1-SFavU5i6XlHK2sswy60k5
 In the main folder you'll find notebooks that show examples of how to use the model.
 
 ### Note:
-The `training_50_dih.joblib` and `validation_dih.joblib` files are not available because they have to be generated from txt version of the data. The data is in its raw format represented as 3d vectors, while the files expected by the txt pipeline are protein representation converted to dihedral angles. Thus if you can't generate these files yourself I recommend working with the full tensor-based pipeline instead of the txt data.
+The `training_50_dih.joblib` and `validation_dih.joblib` files are not available because they have to be generated from txt version of the data. The data is in its raw format represented as 3d vectors, while the files expected by the txt pipeline are protein representation converted to dihedral angles. Thus if you can't generate these files yourself I recommend working with the full tensor-based pipeline (`Full pipeline - tensor data.ipynb` or the model files directly) instead of the txt data.
 
 # Model configuration details
 
